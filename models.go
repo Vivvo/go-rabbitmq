@@ -14,8 +14,9 @@ type RabbitMQ struct {
 }
 
 type MessageHandler struct {
-	Type        string
-	HandlerFunc func(dto MessageDto) error
+	Type          string
+	ExpectedClass interface{}
+	HandlerFunc   func(dto interface{}) error
 }
 
 type MessageDto struct {

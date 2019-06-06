@@ -3,14 +3,23 @@ package rabbitmq
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/mitchellh/mapstructure"
 	"github.com/streadway/amqp"
 	"log"
+	"reflect"
 )
 
 func failOnError(err error, msg string) {
 	if err != nil {
 		log.Fatalf("%s: %s", msg, err)
 	}
+}
+
+func transform(t reflect.Type, input interface{}) interface{} {
+	v := reflect.New(t).Interface()
+	err := mapstructure.Decode(input, v)
+	failOnError(err, fmt.Sprintf("Unable to transform message to type %s", t.String()))
+	return v
 }
 
 func (r RabbitMQ) handleMessage(d amqp.Delivery) {
@@ -20,7 +29,9 @@ func (r RabbitMQ) handleMessage(d amqp.Delivery) {
 
 	for _, h := range r.Handlers {
 		if msg.PublishChangesMessageType == h.Type {
-			err := h.HandlerFunc(msg)
+			v := transform(reflect.TypeOf(h.ExpectedClass), msg.Payload)
+
+			err := h.HandlerFunc(v)
 			if err != nil {
 				log.Printf("HandlerFunc returned an error handling the message, requeueing...")
 				err = d.Nack(false, true)
