@@ -7,6 +7,7 @@ import (
 	"github.com/streadway/amqp"
 	"log"
 	"reflect"
+	"sort"
 )
 
 func failOnError(err error, msg string) {
@@ -28,8 +29,18 @@ func (r RabbitMQ) handleMessage(d amqp.Delivery) {
 	failOnError(err, "Unable to marshall body")
 
 	for _, h := range r.Handlers {
-		if msg.PublishChangesMessageType == h.Type {
-			v := transform(reflect.TypeOf(h.ExpectedClass), msg.Payload)
+		if h.Type == "*" || h.Type == msg.PublishChangesMessageType {
+			var v interface{}
+			if h.ExpectedClass != nil {
+				v = transform(reflect.TypeOf(h.ExpectedClass), msg.Payload)
+			} else {
+				v = msg.Payload
+			}
+
+			if h.HandlerFunc == nil {
+				log.Printf("HandlerFunc not implemented")
+				return
+			}
 
 			err := h.HandlerFunc(v)
 			if err != nil {
@@ -91,6 +102,11 @@ func (r RabbitMQ) Run() {
 		nil,    // args
 	)
 	failOnError(err, "Failed to register a consumer")
+
+	// Always use wildcard handler last
+	sort.Slice(r.Handlers[:], func (i, j int) bool {
+		return r.Handlers[i].Type != r.Handlers[j].Type
+	})
 
 	r.handleConsume(deliveries)
 }
