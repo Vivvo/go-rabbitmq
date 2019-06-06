@@ -1,11 +1,11 @@
 package rabbitmq
 
 type Config struct {
-	Hostname  string
-	Port      string
-	Username  string
-	Password  string
-	QueueName string
+	Hostname  string `json:"hostname"`
+	Port      string `json:"port"`
+	Username  string `json:"username"`
+	Password  string `json:"password"`
+	QueueName string `json:"queueName"`
 }
 
 type RabbitMQ struct {
