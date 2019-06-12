@@ -30,16 +30,16 @@ func (r RabbitMQ) handleMessage(d amqp.Delivery) {
 
 	for _, h := range r.Handlers {
 		if h.Type == "*" || h.Type == msg.PublishChangesMessageType {
+			if h.HandlerFunc == nil {
+				log.Printf("HandlerFunc not implemented")
+				return
+			}
+
 			var v interface{}
 			if h.ExpectedClass != nil {
 				v = transform(reflect.TypeOf(h.ExpectedClass), msg.Payload)
 			} else {
 				v = msg.Payload
-			}
-
-			if h.HandlerFunc == nil {
-				log.Printf("HandlerFunc not implemented")
-				return
 			}
 
 			err := h.HandlerFunc(v)
@@ -104,7 +104,7 @@ func (r RabbitMQ) Run() {
 	failOnError(err, "Failed to register a consumer")
 
 	// Always use wildcard handler last
-	sort.Slice(r.Handlers[:], func (i, j int) bool {
+	sort.Slice(r.Handlers[:], func(i, j int) bool {
 		return r.Handlers[i].Type != r.Handlers[j].Type
 	})
 
