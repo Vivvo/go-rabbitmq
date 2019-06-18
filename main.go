@@ -44,8 +44,8 @@ func (r RabbitMQ) handleMessage(d amqp.Delivery) {
 
 			err := h.HandlerFunc(v)
 			if err != nil {
-				log.Printf("HandlerFunc returned an error handling the message, requeueing...")
-				err = d.Nack(false, true)
+				log.Printf("HandlerFunc returned an error handling the message")
+				err = d.Nack(false, false)
 				failOnError(err, "Failed to nack message")
 			} else {
 				log.Printf("HandlerFunc successfully handled the message")
