@@ -1,4 +1,4 @@
-module github.com/rabbitmq
+module github.com/Vivvo/go-rabbitmq
 
 go 1.12
 
